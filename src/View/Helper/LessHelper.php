@@ -31,12 +31,13 @@ class LessHelper extends Helper
 
 
     /**
-     * Returns CSS link of parsed LESS file
+     * Returns CSS link tag of parsed LESS file
      * 
      * @var string $path Less file path
      * @var array $options Options
-     * @return string CSS link
-     * @throws CakeException When the path is missing
+     * @return string CSS link tag
+     * @throws CakeException When the LESS file is missing
+     * @throws CakeException When the output folder is not writable
      */
     public function link(string $path, array $options = []): string
     {
@@ -46,33 +47,37 @@ class LessHelper extends Helper
 
         $options = array_merge($defaults, $options);
 
+        // Check if the less file exists
         if (!file_exists(ROOT . $path)) {
             throw new CakeException('LESS file missing: ' . ROOT . $path );
         }
 
+        // Generate CSS filename
         $filename = md5($path . filemtime(ROOT . $path)) . '.css';
 
-        $cssFilename = $this->_defaultConfig['outputFolder'] . DS . $filename;
+        $outputFolder = $this->_defaultConfig['outputFolder'];
+        $outputFolderPath = WWW_ROOT .  $outputFolder;
+        $cssPath = DS . $outputFolder . DS . $filename;
 
-        if (file_exists(WWW_ROOT . $cssFilename)) {
-            return $this->Html->css(DS . $cssFilename);
+        // If CSS file already exists then return the CSS path
+        if (file_exists($outputFolderPath . DS . $filename)) {
+            return $this->Html->css($cssPath);
         }
 
+        // Check if output folder path is writable
+        if (!is_writable($outputFolderPath)) {
+            throw new CakeException('LESS folder is not writable: ' . $outputFolderPath );
+        }
+
+        // Parse LESS and get the result
         $parser = new \Less_Parser();
+        $parser->parseFile(ROOT . $path, '/');
+        $css = $parser->getCss();
 
-        try {
-            $parser->parseFile(ROOT . $path, '/');
-            $css = $parser->getCss();
-        } catch (CakeException $e) {
-            echo $e->getMessage();
-        }
+        // Write CSS file
+        file_put_contents($outputFolderPath . DS . $filename, $css);
 
-        try {
-            file_put_contents(WWW_ROOT . $cssFilename, $css);
-        } catch (CakeException $e) {
-            echo $e->getMessage();
-        }
-
-        return $this->Html->css(DS . $cssFilename);
+        // Return CSS link tag 
+        return $this->Html->css($cssPath);
     }
 }
