@@ -34,6 +34,15 @@ bin/cake plugin load Less
 
 ## Usage
 
+Add helper in the AppView.php:
+
+```
+public function initialize(): void
+{
+    $this->addHelper('Less.Less');
+}
+```
+
 In the HTML head tag add:
 
 ```
@@ -46,7 +55,7 @@ In the HTML head tag add:
 
 ### Bugs & Feedback
 
-https://github.com/bramml/cake-less/issues
+https://github.com/brammo/cake-less/issues
 
 ## License
 
